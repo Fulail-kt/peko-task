@@ -14,16 +14,20 @@ const AdminTicket = () => {
     const [selectedStatus, setSelectedStatus] = useState('');
     const statusOptions = ['open', 'in progress', 'resolved'];
 
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const [sortBy, setSortBy] = useState('');
+
 
     useEffect(() => {
         const token = localStorage.getItem('peko');
         const decoded = jwtDecode(token);
         setUserId(decoded.id);
 
-        socket.emit('register', decoded.id); 
+        socket.emit('register', decoded.id);
 
         socket.on('notification', (message) => {
-            alert(`Notification: ${message}`); 
+            alert(`Notification: ${message}`);
         });
 
         return () => {
@@ -37,18 +41,23 @@ const AdminTicket = () => {
     };
 
 
-    useEffect(() => {
-        fetchTickets();
-    }, []);
-    
-    const fetchTickets = async () => {
+    const fetchTickets = async (query = '') => {
         try {
-            const response = await Api.get('/tickets');
+            let response;
+            if (query) {
+                response = await Api.get(`/tickets?search=${query}`);
+            } else {
+                response = await Api.get('/tickets');
+            }
             setTickets(response.data);
         } catch (error) {
             console.error('Error fetching tickets:', error);
         }
     };
+
+    useEffect(() => {
+        fetchTickets(searchQuery);
+    }, [searchQuery]);
 
     const closeModal = () => {
         setShowModal(false);
@@ -59,14 +68,23 @@ const AdminTicket = () => {
     const handleAddComment = async () => {
         try {
 
-            console.log(selectedTicket, "slelcted")
-            if (selectedTicket?.comments) {
-                console.log("abcdef")
+            if (selectedTicket?.comments[0]?.id) {
 
-                await Api.put(`/tickets/comment/${selectedTicket.comments[0].id}`, { content: newComment });
+                let content;
+
+                content = newComment
+
+                if (!newComment) {
+                    content = selectedTicket?.comments[0]?.content
+                }
+
+                console.log(content, newComment)
+
+
+                await Api.put(`/tickets/comment/${selectedTicket.comments[0].id}`, { content, userId: selectedTicket.userId });
             } else {
 
-                await Api.post(`/tickets/comment`, { content: newComment, ticketId: selectedTicket.id });
+                await Api.post(`/tickets/comment`, { content: newComment, ticketId: selectedTicket.id, userId: selectedTicket.userId, adminId: userId });
             }
 
             fetchTickets();
@@ -80,13 +98,13 @@ const AdminTicket = () => {
     };
 
 
-    const handleStatusChange = async (id,e) => {
+    const handleStatusChange = async (id, e) => {
         const { value } = e.target;
-        console.log('helo',id,value)
+        console.log('helo', id, value)
         setSelectedStatus(value);
         if (value) {
             try {
-                const ticket = tickets.find(ticket => ticket.id === id);
+                const ticket = tickets.find(ticket => ticket?.id === id);
                 await Api.put(`/tickets/status/${id}`, { status: value, userId: ticket.user.id });
                 fetchTickets();
             } catch (error) {
@@ -97,6 +115,22 @@ const AdminTicket = () => {
 
 
 
+    const handleSortChange = (criteria) => {
+        setSortBy(criteria);
+        const sortedTickets = sortTickets(criteria);
+        console.log(sortedTickets, "Sorted Tickets");
+        setTickets(sortedTickets);
+    };
+
+    const sortTickets = (criteria) => {
+        if (criteria === 'latest') {
+            return [...tickets].sort((a, b) => b.id - a.id);
+        } else if (criteria === 'high' || criteria === 'medium' || criteria === 'low') {
+            return tickets.filter(ticket => ticket.priority === criteria);
+        } else {
+            return tickets;
+        }
+    };
 
     return (
         <>
@@ -105,6 +139,28 @@ const AdminTicket = () => {
                 <div className="py-8">
                     <div className="flex flex-row justify-between w-full mb-1 sm:mb-0">
                         <h2 className="text-2xl leading-tight">Tickets</h2>
+                        <div> <input
+                            type="text"
+                            className='px-3 py-1 rounded-md'
+                            placeholder='Search'
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                            <button className='btn bg-blue-900 px-2 py-1 rounded-md' onClick={() => fetchTickets(searchQuery)}>Search</button></div>
+
+                        <div>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => handleSortChange(e.target.value)}
+                                className="bg-transparent border-b  border-gray-400 rounded-md text-gray-200  focus:outline-none focus:border-indigo-500"
+                            >
+                                <option className='bg-slate-600'  disabled value="">Sort by</option>
+                                <option className='bg-slate-600' value="latest">Latest</option>
+                                <option className='bg-slate-600' value="high">Priority high </option>
+                                <option className='bg-slate-600' value="medium">Priority medium </option>
+                                <option className='bg-slate-600' value="low">Priority low </option>
+                            </select>
+                        </div>
                     </div>
                     <div className="-mx-4 sm:-mx-8 px-4 sm:px-8 py-4 overflow-x-auto">
                         <div className="inline-block min-w-full shadow rounded-lg overflow-hidden">
@@ -180,9 +236,9 @@ const AdminTicket = () => {
                                             </td>
                                             <td className="px-5 py-5 border-b border-gray-200 bg-slate-600 text-sm">
                                                 <div>
-                                                <select
+                                                    <select
                                                         value={ticket.status}
-                                                        onChange={(e)=>handleStatusChange(ticket?.id, e)}
+                                                        onChange={(e) => handleStatusChange(ticket?.id, e)}
                                                         className="bg-transparent border-b border-gray-400 rounded-md text-gray-200  focus:outline-none focus:border-indigo-500"
                                                     >
                                                         <option className='bg-gray-700' value="">Select Status</option>

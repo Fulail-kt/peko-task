@@ -35,7 +35,6 @@ export const SocketServer = (server) => {
 };
 
 export const sendNotificationToUser = (userId, message) => {
-    console.log("heloooooooooooooo")
     const socketId = userSocketMap[userId];
     if (socketId) {
         io.to(socketId).emit('notification', message);

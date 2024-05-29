@@ -62,6 +62,15 @@ const Tickets = () => {
     setIsModalOpen(true);
   };
 
+  const handleDelete = async (ticket) => {
+    try {
+      await Api.delete(`/tickets/${ticket.id}`);
+      setTickets(tickets.filter(t => t.id !== ticket.id));
+    } catch (error) {
+      console.error('Error deleting ticket:', error);
+    }
+  };
+
   const handleFormSubmit = async (ticketData) => {
     try {
       if (selectedTicket) {
@@ -87,7 +96,7 @@ const Tickets = () => {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {tickets?.map(ticket => (
-          <TicketCard key={ticket.id} ticket={ticket} onEdit={() => handleEditTicket(ticket)} />
+          <TicketCard key={ticket.id} ticket={ticket} onEdit={() => handleEditTicket(ticket)} onDelete={()=>handleDelete(ticket)}  />
         ))}
       </div>
 

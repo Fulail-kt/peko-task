@@ -2,6 +2,8 @@ import { User } from '../models/Users.js';
 import Ticket from '../models/Ticket.js';
 import CommentModal from '../models/Comment.js';
 import { sendNotificationToUser } from '../socket.io.js';
+import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize';
 
 // Create Ticket
 export const createTicket = async (req, res) => {
@@ -24,22 +26,49 @@ export const createTicket = async (req, res) => {
 // Get All Tickets
 export const getTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.findAll({
-      include: [
-        { model: User, as: 'user' },
-        {
-          model: CommentModal,
-          as: 'comments',
-          required: false,
-          include: { model: User, as: 'admin' }
+    const { search } = req.query;
+    let tickets;
+
+    if (search) {
+      tickets = await Ticket.findAll({
+        include: [
+          { model: User, as: 'user' },
+          {
+            model: CommentModal,
+            as: 'comments',
+            required: false,
+            include: { model: User, as: 'admin' }
+          }
+        ],
+        where: {
+          [Op.or]: [
+            Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('title')), 'LIKE', `%${search.toLowerCase()}%`),
+            Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('description')), 'LIKE', `%${search.toLowerCase()}%`),
+            Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('status')), 'LIKE', `%${search.toLowerCase()}%`),
+            Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('priority')), 'LIKE', `%${search.toLowerCase()}%`),
+          ]
         }
-      ]
-    });
+      });
+    } else {
+      tickets = await Ticket.findAll({
+        include: [
+          { model: User, as: 'user' },
+          {
+            model: CommentModal,
+            as: 'comments',
+            required: false,
+            include: { model: User, as: 'admin' }
+          }
+        ]
+      });
+    }
+
     res.status(200).json(tickets);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Get Ticket by ID
 export const getTicketsByUserId = async (req, res) => {
@@ -107,11 +136,29 @@ export const updateStatus = async (req, res) => {
   }
 };
 
+
+export const deleteTicket= async(req,res)=>{
+  try {
+    const { id } = req.params;
+    const ticket = await Ticket.findByPk(id);
+    if (!ticket) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+    await ticket.destroy();
+    res.status(200).json({ message: 'Comment deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 // Create Comment
 export const createComment = async (req, res) => {
-  const { content, ticketId, adminId } = req.body;
+  const { content, ticketId, adminId ,userId} = req.body;
   try {
     const comment = await CommentModal.create({ content, ticketId, adminId });
+    console.log(userId,"came her")
+    sendNotificationToUser(userId, `Admin add comment on your ticket ${content}.`);
     res.status(201).json(comment);
   } catch (error) {
     res.status(500).json({ error: error.message });
