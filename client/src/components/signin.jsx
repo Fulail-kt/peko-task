@@ -17,15 +17,22 @@ const Signin = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if(formData.password.length<6){
+      return alert('password atleast 6 digit ')
+    }
     try {
       const res = await Api.post('/users/login', formData);
       console.log(res.data);
+
 
       if(res?.data?.success){
         localStorage.setItem('peko',res?.data?.token)
         navigate('/tickets',{replace:true})
       }
+
     } catch (error) {
+      alert(error?.response?.data?.error || "error occured")
       console.error(error);
     }
   };

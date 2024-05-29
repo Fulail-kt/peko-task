@@ -19,6 +19,13 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if(!formData.password||!formData.email||!formData.name){
+          return alert("field missing")
+        }
+        if(formData.password.length<6){
+          return alert('password atleast 6 digit ')
+        }
         try {
           const res = await Api.post('/users/register', formData );
           if(res.data.success){
