@@ -1,8 +1,20 @@
 import axios from "axios";
 
 const Api = axios.create({
-    baseURL:'http://localhost:2000/api'
+    baseURL: import.meta.env.VITE_BASE_URL
 })
 
-
-export default Api
+Api.interceptors.request.use(
+    config => {
+      const token = localStorage.getItem('peko');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    error => {
+      return Promise.reject(error);
+    }
+  );
+  
+  export default Api;

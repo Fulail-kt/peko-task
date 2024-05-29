@@ -6,12 +6,13 @@ import Tickets from './pages/users/Tickets';
 import AdminTicket from './pages/admin/adminTicket';
 import Dashboard from './pages/admin/dashboard';
 import ProtectedRoute from './protectedRoute/protectedRoute';
-import Socket from './socket/socket';
+
 
 function App() {
   return (
     <Routes>
   
+        <Route path="/" element={ <Signin/>} />
         <Route path="/sign-up" element={ <Signup/>} />
         <Route path="/sign-in" element={ <Signin/>} />
 

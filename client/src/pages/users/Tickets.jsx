@@ -5,7 +5,7 @@ import Api from '../../axios/api';
 import { jwtDecode } from 'jwt-decode';
 import Navbar from '../../components/navbar';
 import io from 'socket.io-client';
-const socket = io('http://localhost:2001')
+const socket = io(import.meta.env.VITE_SOCKET)
 
 
 
