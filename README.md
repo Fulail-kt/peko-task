@@ -29,7 +29,7 @@ This is a web-based application that allows users to raise tickets for complaint
 ## Setup Instructions
 1. Clone the repository.
  ```sh
-  git clone [https://github.com/Fulail-kt/peko-task](https://github.com/Fulail-kt/peko-task.git)
+  git clone https://github.com/Fulail-kt/peko-task.git
  ```
 2. Install dependencies using `npm install` in both the backend and frontend directories.
    ```sh
