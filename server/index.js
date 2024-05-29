@@ -4,6 +4,7 @@ import http from 'http';
 
 import userRoutes from './routes/users.js';
 import ticketRoutes from './routes/ticket.js';
+
 import dotenv from 'dotenv';
 dotenv.config();
 import { SocketServer } from './socket.io.js';
@@ -14,7 +15,7 @@ const server = http.createServer(app);
 
 SocketServer(server);
 
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 
 // Use routes

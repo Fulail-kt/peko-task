@@ -6,7 +6,7 @@ const Dashboard = () => {
     <>
     <div className='w-full min-h-screen'>
     <Navbar/>
-      this is admin Dashboard
+      <div className='w-full h-full flex justify-center items-center'><p>This is admin Dashboard</p></div>
     </div>
     </>
   )
