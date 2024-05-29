@@ -145,7 +145,7 @@ export const deleteTicket= async(req,res)=>{
       return res.status(404).json({ error: 'Comment not found' });
     }
     await ticket.destroy();
-    res.status(200).json({ message: 'Comment deleted successfully' });
+    res.status(200).json({ success:true, message: 'Comment deleted successfully' });
   } catch (error) {
     console.error('Error deleting comment:', error);
     res.status(500).json({ error: 'Internal server error' });
